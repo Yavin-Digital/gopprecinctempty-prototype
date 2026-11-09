@@ -1,0 +1,121 @@
+:root {
+  --ink: #1a1720;
+  --navy: #0d0572;
+  --paper: #f4f1eb;
+  --line: rgba(13, 5, 114, 0.16);
+  --tap: 48px;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { overflow-x: clip; }
+
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+
+a { color: var(--navy); }
+
+.skip {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  transform: translateY(-120%);
+  background: #fff;
+  padding: 0.75rem 1rem;
+}
+
+.skip:focus { transform: none; }
+
+.wrap {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+  padding: 1rem;
+}
+
+.site-header {
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--navy);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0.2rem 0 0;
+  font-size: 1.15rem;
+}
+
+h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+  margin: 0.5rem 0;
+}
+
+h2 { font-size: 1.45rem; margin: 1.4rem 0 0.4rem; }
+
+.lede { font-size: 1.2rem; }
+
+.filters {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .filters { grid-template-columns: 1fr 1fr; }
+}
+
+label {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap);
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: var(--tap);
+  font: inherit;
+  font-size: 1.125rem;
+}
+
+.scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  table-layout: fixed;
+}
+
+caption {
+  text-align: left;
+  padding: 0 0 0.75rem;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.55rem 0.4rem;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+th { background: #fff; }
