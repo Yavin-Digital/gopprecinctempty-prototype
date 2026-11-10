@@ -271,6 +271,7 @@
 
   if (activateBtn) {
     var tapStart = null;
+    var activateArmed = false;
     activateBtn.addEventListener("pointerdown", function (event) {
       tapStart = { x: event.clientX, y: event.clientY };
     });
@@ -278,9 +279,23 @@
       if (!tapStart) return;
       var moved = Math.abs(event.clientX - tapStart.x) + Math.abs(event.clientY - tapStart.y);
       tapStart = null;
-      if (moved < 12) activateMap();
+      if (moved >= 12) return;
+      event.preventDefault();
+      event.stopPropagation();
+      activateArmed = true;
+      // Hide only after the gesture's click, so it cannot fall through onto a precinct.
+      root.setTimeout(function () {
+        if (!activateArmed) return;
+        activateArmed = false;
+        activateMap();
+      }, 400);
     });
-    activateBtn.addEventListener("click", activateMap);
+    activateBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      activateArmed = false;
+      activateMap();
+    });
   }
   if (doneBtn) doneBtn.addEventListener("click", deactivateMap);
   if (coarse.addEventListener) coarse.addEventListener("change", applyGestureMode);
