@@ -28,7 +28,8 @@
   var map = root.L.map(mapEl, {
     scrollWheelZoom: false,
     keyboard: true,
-    zoomControl: true
+    zoomControl: true,
+    zoomSnap: 0
   });
   mapEl.setAttribute("role", "region");
   mapEl.setAttribute("aria-label", "Map of the 67 voting precincts in Commissioner Precinct 4");
@@ -45,6 +46,8 @@
   var loaded = false;
   var pendingShow = null;
   var mapActivated = false;
+  var precinctGroup = null;
+  var showingAll = true;
   var coarse = root.matchMedia("(pointer: coarse)");
 
   function setStatus(text) {
@@ -146,6 +149,13 @@
     applyGestureMode();
   }
 
+  function fitAllPrecincts() {
+    if (!precinctGroup) return;
+    map.invalidateSize();
+    map.fitBounds(precinctGroup.getBounds(), { padding: [24, 24], animate: false });
+    showingAll = true;
+  }
+
   function showOnMap(id, scrollMap) {
     if (!loaded) {
       pendingShow = { id: id, scrollMap: scrollMap };
@@ -158,6 +168,7 @@
       return;
     }
     selectedId = id;
+    showingAll = false;
     applyStyles();
     if (coarse.matches) activateMap();
     var status = statusByPrecinct[id] || STATUS_UNKNOWN;
@@ -339,18 +350,17 @@
     return response.json();
   }).then(function (data) {
     data.features.sort(function (a, b) { return bboxArea(b) - bboxArea(a); });
-    var group = root.L.geoJSON(data, {
+    precinctGroup = root.L.geoJSON(data, {
       style: function (feature) {
         return styleFor(String(feature.properties.precinct), false);
       },
       onEachFeature: onEachFeature
     }).addTo(map);
-    group.eachLayer(function (layer) {
+    precinctGroup.eachLayer(function (layer) {
       var id = String(layer.feature.properties.precinct);
       wireElement(layer, id, statusByPrecinct[id] || STATUS_UNKNOWN);
     });
-    map.invalidateSize();
-    map.fitBounds(group.getBounds(), { padding: [12, 12], animate: false });
+    fitAllPrecincts();
     loaded = true;
     var count = Object.keys(layersById).length;
     if (!(searchStatus && searchStatus.textContent)) setStatus(count + " precincts on the map.");
@@ -365,5 +375,8 @@
     setStatus("The precinct map did not load.");
   });
 
-  root.addEventListener("resize", function () { map.invalidateSize(); });
+  root.addEventListener("resize", function () {
+    if (showingAll) fitAllPrecincts();
+    else map.invalidateSize();
+  });
 })(typeof window !== "undefined" ? window : globalThis);
