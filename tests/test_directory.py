@@ -62,6 +62,50 @@ class DirectoryTests(unittest.TestCase):
         self.assertTrue((ROOT / "charts" / "turnout-p2.jpg").is_file())
         self.assertFalse((ROOT / "data" / "pct4-long.csv").exists())
 
+    def test_map_uses_the_official_precinct_polygons(self):
+        geojson_path = ROOT / "data" / "pct4-precincts.geojson"
+        note = (ROOT / "data" / "pct4-boundaries.md").read_text(encoding="utf-8")
+        data = json.loads(geojson_path.read_text(encoding="utf-8"))
+        self.assertLess(geojson_path.stat().st_size, 1_000_000)
+        self.assertEqual(data["type"], "FeatureCollection")
+        self.assertEqual(len(data["features"]), 67)
+        ids = [feature["properties"]["precinct"] for feature in data["features"]]
+        self.assertEqual(ids, sorted(item["precinct"] for item in self.items))
+        self.assertEqual(set(ids), {item["precinct"] for item in self.items})
+        for feature in data["features"]:
+            self.assertIn(feature["geometry"]["type"], ("Polygon", "MultiPolygon"))
+            self._assert_coordinates_in_denton(feature["geometry"]["coordinates"])
+        self.assertIn("https://gis.dentoncounty.gov/arcgis/rest/services/PoliticalBoundaries_GC/MapServer/9", note)
+        self.assertIn("2026-11-10", note)
+        self.assertIn("None of the 67 precincts were missing", note)
+        self.assertEqual(self.page.count('class="show-on-map"'), 67)
+        self.assertIn('id="precinct-map"', self.page)
+        self.assertIn("Tap to use the map", self.page)
+        self.assertIn('src="/vendor/leaflet/leaflet.js"', self.page)
+        self.assertIn("https://gis.dentoncounty.gov/arcgis/rest/services/PoliticalBoundaries_GC/MapServer/9", self.page)
+        self.assertIn("chair listed in Nov 7 roster", self.page)
+        self.assertIn("labeled vacant in Nov 7 roster", self.page)
+        map_js = (ROOT / "js" / "map.js").read_text(encoding="utf-8")
+        css = (ROOT / "css" / "site.css").read_text(encoding="utf-8")
+        self.assertIn("/data/pct4-precincts.geojson", map_js)
+        self.assertIn("https://tile.openstreetmap.de/{z}/{x}/{y}.png", map_js)
+        self.assertNotIn("api_key", map_js.lower())
+        self.assertNotIn("apikey", map_js.lower())
+        self.assertIn("#0d0572", map_js)
+        self.assertIn("#9a3412", map_js)
+        self.assertIn("--chair-fill: #0d0572", css)
+        self.assertIn("--vacant-fill: #9a3412", css)
+
+    def _assert_coordinates_in_denton(self, coords):
+        if isinstance(coords[0], (int, float)):
+            self.assertGreaterEqual(coords[0], -98)
+            self.assertLessEqual(coords[0], -96.5)
+            self.assertGreaterEqual(coords[1], 32.5)
+            self.assertLessEqual(coords[1], 34)
+            return
+        for part in coords:
+            self._assert_coordinates_in_denton(part)
+
 
 if __name__ == "__main__":
     unittest.main()

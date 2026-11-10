@@ -38,8 +38,8 @@ def page() -> str:
         source = item["source"]
         source_html = f'<a href="/charts/{html.escape(source)}">{html.escape(source)}</a>'
         body_rows.append(
-            "<tr data-precinct=\"{p}\" data-status=\"{s}\">"
-            "<th scope=\"row\">{p}</th><td>{status}</td><td>{label}</td><td>{source}</td><td>{reg}</td><td>{ballots}</td>"
+            "<tr data-precinct=\"{p}\" data-status=\"{s}\" id=\"precinct-{p}\">"
+            "<th scope=\"row\"><span class=\"precinct-num\">{p}</span> <a class=\"show-on-map\" href=\"#precinct-map\" data-precinct=\"{p}\">show on map</a></th><td>{status}</td><td>{label}</td><td>{source}</td><td>{reg}</td><td>{ballots}</td>"
             "</tr>".format(
                 p=html.escape(item["precinct"]),
                 s=html.escape(item["status"]),
@@ -87,6 +87,7 @@ def page() -> str:
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(description)}">
   <link rel="canonical" href="{HOST}/">
+  <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="/css/site.css">
   <script type="application/ld+json">{json.dumps(webpage, ensure_ascii=False)}</script>
   <script type="application/ld+json">{json.dumps(item_list, ensure_ascii=False)}</script>
@@ -99,7 +100,8 @@ def page() -> str:
       <p class="title">Commissioner Precinct 4 directory</p>
     </div>
   </header>
-  <main id="directory" class="wrap">
+  <main id="directory">
+    <div class="wrap">
     <h1>Precinct directory</h1>
     <p class="lede">The 67 voting precincts in County Commissioner Precinct 4, with the chair label printed on the {ROSTER_DATE} charts. This is not all of Denton County.</p>
     <h2>What the labels are</h2>
@@ -112,6 +114,36 @@ def page() -> str:
     <h2>Source</h2>
     <p>Election counts: Denton County Elections, <a href="{SOURCE_ZIP}">detailxml.zip</a> for version 385491. Landing page: <a href="{SOURCE_PAGE}">Denton County results</a>. The turnout file on this site is <a href="/data/pct4-turnout.csv">pct4-turnout.csv</a>. N/A in the underlying choice export means not on the ballot, not zero. This page does not publish that choice file.</p>
     <p>The noindex tag asks search engines not to index this preview host. It is not a claim that the page is private.</p>
+    </div>
+    <section class="map-section" aria-labelledby="precinct-map-heading">
+      <div class="wrap">
+        <h2 id="precinct-map-heading">Map of the 67 precincts</h2>
+        <p>County Commissioner Precinct 4 only. This is not all of Denton County. Tab to a precinct and press Enter to highlight its row. On a phone, tap the map before moving it so one finger can still scroll the page.</p>
+        <form id="map-search" class="map-search" action="#precinct-map" method="get" role="search">
+          <div>
+            <label for="map-precinct">Search by precinct number</label>
+            <input id="map-precinct" name="map-precinct" type="search" inputmode="numeric" autocomplete="off">
+          </div>
+          <button type="submit">Show on map</button>
+        </form>
+        <p id="map-search-status" role="status"></p>
+      </div>
+      <div class="map-frame" id="map-frame">
+        <div id="precinct-map"></div>
+        <button type="button" id="map-activate" class="map-activate" hidden><span>Tap to use the map</span></button>
+        <button type="button" id="map-done" class="map-done" hidden>Scroll page</button>
+      </div>
+      <div class="wrap">
+        <h3 id="map-legend-heading">Legend</h3>
+        <ul class="map-legend" aria-labelledby="map-legend-heading">
+          <li><span class="swatch swatch-chair" aria-hidden="true"></span> {STATUS_CHAIR}</li>
+          <li><span class="swatch swatch-vacant" aria-hidden="true"></span> {STATUS_VACANT}</li>
+        </ul>
+        <p id="map-caveat">Colors follow the chair label printed on the {ROSTER_DATE} charts. The chart footnote says those labels are the Denton County GOP roster retrieved {ROSTER_DATE}. They were not independently rechecked as the roster on any later date. A printed label is not a claim about who holds the office today.</p>
+        <p>Boundaries are Denton County GIS voter precincts effective January 1, 2026, for commissioner code 4, pulled November 10, 2026 from the <a href="https://gis.dentoncounty.gov/arcgis/rest/services/PoliticalBoundaries_GC/MapServer/9">county MapServer</a>. The shapes are those official polygons with coordinates rounded to 5 decimal places.</p>
+      </div>
+    </section>
+    <div class="wrap">
     <h2>Filter the table</h2>
     <form class="filters" action="#precinct-directory" method="get" onsubmit="return false">
       <div>
@@ -148,8 +180,11 @@ def page() -> str:
       </table>
     </div>
     <p id="directory-filter-status" role="status"></p>
+    </div>
   </main>
+  <script src="/vendor/leaflet/leaflet.js"></script>
   <script src="/js/directory.js"></script>
+  <script src="/js/map.js"></script>
 </body>
 </html>
 """
